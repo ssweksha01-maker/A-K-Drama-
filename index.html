@@ -1,0 +1,357 @@
+<title>Descendants Scroll</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Nunito:wght@400;600;800&display=swap">
+<style>
+/* Layout: one long soft-pastel scroll. Each chapter is a centered block, stickers float and drift at different speeds, photo frames are tap-to-add. */
+:root {
+  --bg: #eef4fb;
+  --bg2: #fde8ec;
+  --bg3: #e2f3ea;
+  --ink: #2b3a55;
+  --muted: #5d6c86;
+  --army: #7f9c7a;
+  --rose: #ef7f93;
+  --card: #ffffff;
+  --line: #cfdcec;
+  --font-display: "Gaegu", "Comic Sans MS", cursive;
+  --font-body: "Nunito", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1b2236; --bg2: #2a2237; --bg3: #1d2c2e; --ink: #eef2fb; --muted: #aab6cf;
+    --army: #9bb896; --rose: #f294a5; --card: #263049; --line: #3a4766; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1b2236; --bg2: #2a2237; --bg3: #1d2c2e; --ink: #eef2fb; --muted: #aab6cf;
+  --army: #9bb896; --rose: #f294a5; --card: #263049; --line: #3a4766; color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 17px;
+  line-height: 1.6;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  overflow-x: hidden;
+}
+h1, h2, h3 { font-family: var(--font-display); line-height: 1.05; text-wrap: balance; margin: 0; }
+p { margin: 0; }
+
+#bar {
+  position: fixed; top: 0; left: 0; height: 6px; width: 0%;
+  background: var(--rose); z-index: 20;
+  margin-top: env(safe-area-inset-top, 0px);
+}
+
+.chapter {
+  position: relative;
+  max-width: 880px;
+  margin: 0 auto;
+  padding-block: 72px;
+  display: flex; flex-direction: column; align-items: center; gap: 22px;
+  text-align: center;
+}
+.tint1 { background: linear-gradient(var(--bg), var(--bg2)); }
+.band { margin-inline: calc(50% - 50vw); padding-inline: max(16px, env(safe-area-inset-left, 0px)); }
+.band.pink { background: var(--bg2); }
+.band.mint { background: var(--bg3); }
+
+.eyebrow {
+  font-family: var(--font-display); font-size: 1.3rem; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--army); font-weight: 700;
+}
+.title { font-size: clamp(2.8rem, 11vw, 5.6rem); font-weight: 700; }
+.big { font-size: clamp(2.1rem, 7vw, 3.6rem); font-weight: 700; }
+.lead { max-width: 34rem; color: var(--muted); font-size: 1.1rem; }
+.hl { background: linear-gradient(transparent 58%, color-mix(in srgb, var(--rose) 45%, transparent) 58%); }
+
+/* reveal: text rises in, but is always readable */
+.rise { animation: rise .9s ease both; }
+.js .rise { opacity: .3; transform: translateY(26px); transition: opacity .8s ease, transform .8s ease; animation: none; }
+.js .rise.in { opacity: 1; transform: none; }
+
+/* stickers */
+.sticker { position: absolute; width: 84px; height: 84px; pointer-events: none; z-index: 2; filter: drop-shadow(0 4px 0 rgba(43,58,85,.12)); }
+.sticker.lg { width: 110px; height: 110px; }
+.sticker.sm { width: 60px; height: 60px; }
+
+/* hero */
+.hero { min-height: 0; padding-block: 96px 64px; }
+.scrollhint { font-family: var(--font-display); font-size: 1.4rem; color: var(--muted); animation: bob 1.6s ease-in-out infinite; }
+.badge-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.pill { background: var(--card); border: 2px dashed var(--line); border-radius: 999px; padding: 4px 16px; font-weight: 800; font-size: .95rem; }
+
+/* photo frames */
+.photo {
+  position: relative; width: min(300px, 100%); aspect-ratio: 4 / 5; background: var(--card);
+  border: 3px solid var(--card); outline: 2px dashed var(--line); outline-offset: 6px; border-radius: 14px;
+  box-shadow: 0 10px 0 rgba(43,58,85,.08); display: grid; place-items: center; overflow: hidden; cursor: pointer;
+  transform: rotate(-2deg); transition: transform .3s;
+}
+.photo:hover, .photo:focus-within { transform: rotate(0deg) scale(1.02); }
+.photo.alt { transform: rotate(2deg); }
+.photo input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.photo .ph { padding: 20px; color: var(--muted); font-weight: 600; font-size: .95rem; display: grid; gap: 8px; justify-items: center; }
+.photo .ph svg { width: 64px; height: 64px; }
+.photo .ph b { font-family: var(--font-display); font-size: 1.5rem; color: var(--ink); }
+.photo:focus-within { outline-color: var(--rose); }
+.caption { font-family: var(--font-display); font-size: 1.5rem; }
+.small { font-size: .9rem; color: var(--muted); }
+
+/* two worlds */
+.split { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; width: 100%; }
+.split > div { background: var(--card); border-radius: 20px; padding: 22px 18px; text-align: left; min-width: 0; }
+.split h3 { font-size: 2rem; margin-bottom: 8px; }
+.split ul { margin: 0; padding-left: 20px; }
+.split li { margin-bottom: 6px; }
+.army-card { border-top: 8px solid var(--army); }
+.med-card { border-top: 8px solid var(--rose); }
+
+/* crew row */
+.crew { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 30px; width: 100%; justify-items: center; }
+.crew .photo { width: min(240px, 100%); }
+
+/* heartbeat */
+.ecg { width: 100%; max-width: 640px; }
+.ecg path { fill: none; stroke: var(--rose); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 900; stroke-dashoffset: 900; animation: draw 3.2s linear infinite; }
+.counter { font-family: var(--font-display); font-size: clamp(3rem, 14vw, 6rem); color: var(--rose); font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* stamp */
+.stamp {
+  border: 6px double var(--army); color: var(--army); border-radius: 18px; padding: 8px 26px;
+  font-family: var(--font-display); font-size: clamp(2.2rem, 9vw, 4rem); font-weight: 700; letter-spacing: .06em;
+  transform: rotate(-7deg) scale(1); text-transform: uppercase;
+}
+.js .stamp { transform: rotate(-7deg) scale(2.2); opacity: 0; transition: transform .5s cubic-bezier(.3,1.6,.5,1), opacity .3s; }
+.js .stamp.in { transform: rotate(-7deg) scale(1); opacity: 1; }
+
+footer { text-align: center; padding-block: 28px 56px; color: var(--muted); font-size: .9rem; }
+
+@keyframes rise { from { opacity: .3; transform: translateY(26px); } to { opacity: 1; transform: none; } }
+@keyframes bob { 50% { transform: translateY(8px); } }
+@keyframes draw { 0% { stroke-dashoffset: 900; } 70%, 100% { stroke-dashoffset: 0; } }
+@media (max-width: 560px) { .split { grid-template-columns: 1fr; } .chapter { padding-block: 56px; } }
+@media (prefers-reduced-motion: reduce) {
+  .rise, .scrollhint, .ecg path { animation: none; }
+  .ecg path { stroke-dashoffset: 0; }
+  .js .rise, .js .stamp { transition: none; }
+}
+</style>
+
+<!-- sticker library: all drawn by hand, original shapes -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="s-cross" viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="#fff" stroke="#ef7f93" stroke-width="5"/><rect x="40" y="20" width="20" height="60" rx="6" fill="#ef7f93"/><rect x="20" y="40" width="60" height="20" rx="6" fill="#ef7f93"/></symbol>
+    <symbol id="s-heart" viewBox="0 0 100 100"><path d="M50 86C14 60 8 34 26 20c10-8 22-3 24 8 2-11 14-16 24-8 18 14 12 40-24 66z" fill="#f7a3b2" stroke="#ef7f93" stroke-width="5" stroke-linejoin="round"/><path d="M18 50h18l6-12 8 22 7-14h22" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="s-steth" viewBox="0 0 100 100"><path d="M26 12v26a16 16 0 0 0 32 0V12" fill="none" stroke="#5d7aa8" stroke-width="6" stroke-linecap="round"/><path d="M42 54v8a20 20 0 0 0 40 0v-8" fill="none" stroke="#5d7aa8" stroke-width="6" stroke-linecap="round"/><circle cx="82" cy="48" r="9" fill="#fff" stroke="#5d7aa8" stroke-width="6"/><circle cx="26" cy="12" r="5" fill="#ef7f93"/><circle cx="58" cy="12" r="5" fill="#ef7f93"/></symbol>
+    <symbol id="s-pill" viewBox="0 0 100 100"><g transform="rotate(-35 50 50)"><rect x="12" y="32" width="76" height="36" rx="18" fill="#fff" stroke="#5d7aa8" stroke-width="5"/><path d="M50 32h20a18 18 0 0 1 0 36H50z" fill="#f7a3b2" stroke="#5d7aa8" stroke-width="5" stroke-linejoin="round"/></g></symbol>
+    <symbol id="s-syringe" viewBox="0 0 100 100"><g transform="rotate(40 50 50)"><rect x="28" y="38" width="44" height="24" rx="5" fill="#fff" stroke="#5d7aa8" stroke-width="5"/><path d="M72 50h14M28 50H14M14 40v20M40 38v24M50 38v24M60 38v24" stroke="#5d7aa8" stroke-width="4" stroke-linecap="round"/><path d="M86 50h8" stroke="#ef7f93" stroke-width="4" stroke-linecap="round"/></g></symbol>
+    <symbol id="s-tag" viewBox="0 0 100 100"><path d="M30 6c0 18 20 14 20 34" fill="none" stroke="#9aa6b8" stroke-width="4" stroke-dasharray="2 6" stroke-linecap="round"/><rect x="26" y="34" width="48" height="60" rx="14" fill="#cbd5e1" stroke="#7b8aa3" stroke-width="5"/><circle cx="50" cy="45" r="4" fill="#fff" stroke="#7b8aa3" stroke-width="3"/><path d="M36 62h28M36 72h28M36 82h18" stroke="#7b8aa3" stroke-width="4" stroke-linecap="round"/></symbol>
+    <symbol id="s-beret" viewBox="0 0 100 100"><path d="M10 62c0-26 24-40 46-38 22 2 34 20 30 40-4 12-70 12-76-2z" fill="#7f9c7a" stroke="#5f7d5b" stroke-width="5" stroke-linejoin="round"/><rect x="12" y="60" width="74" height="12" rx="6" fill="#5f7d5b"/><circle cx="34" cy="50" r="9" fill="#f2d98d" stroke="#c9a94a" stroke-width="3"/><path d="M56 26l6-10" stroke="#5f7d5b" stroke-width="5" stroke-linecap="round"/></symbol>
+    <symbol id="s-helmet" viewBox="0 0 100 100"><path d="M10 64a40 38 0 0 1 80 0z" fill="#8aa786" stroke="#5f7d5b" stroke-width="5" stroke-linejoin="round"/><rect x="4" y="62" width="92" height="12" rx="6" fill="#5f7d5b"/><path d="M26 56c8-14 22-20 36-18" fill="none" stroke="#cfe0cb" stroke-width="5" stroke-linecap="round"/><circle cx="50" cy="42" r="5" fill="#f2d98d"/></symbol>
+    <symbol id="s-star" viewBox="0 0 100 100"><path d="M50 8l12 27 29 3-22 20 7 29-26-15-26 15 7-29L9 38l29-3z" fill="#f2d98d" stroke="#c9a94a" stroke-width="5" stroke-linejoin="round"/></symbol>
+    <symbol id="s-patch" viewBox="0 0 100 100"><rect x="8" y="8" width="84" height="84" rx="20" fill="#9bb896" stroke="#5f7d5b" stroke-width="5" stroke-dasharray="7 5"/><path d="M20 66c8-18 18-16 24-28 8 6 4 18 18 20 8-12 4-20 16-26" fill="none" stroke="#6a8a66" stroke-width="12" stroke-linecap="round"/><circle cx="30" cy="30" r="8" fill="#c8d8bf"/><circle cx="68" cy="72" r="9" fill="#7a936f"/></symbol>
+    <symbol id="s-chevron" viewBox="0 0 100 100"><path d="M18 40l32-20 32 20v12L50 32 18 52z" fill="#7f9c7a" stroke="#5f7d5b" stroke-width="4" stroke-linejoin="round"/><path d="M18 66l32-20 32 20v12L50 58 18 78z" fill="#7f9c7a" stroke="#5f7d5b" stroke-width="4" stroke-linejoin="round"/></symbol>
+    <symbol id="s-person" viewBox="0 0 100 100"><circle cx="50" cy="36" r="16" fill="none" stroke="currentColor" stroke-width="5"/><path d="M20 84c2-20 14-28 30-28s28 8 30 28" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"/></symbol>
+  </defs>
+</svg>
+
+<div id="bar"></div>
+
+<main>
+
+  <!-- HERO -->
+  <section class="chapter hero tint1 band">
+    <svg class="sticker lg" style="left:2%;top:54px;transform:rotate(-14deg)" data-speed="0.06"><use href="#s-cross"/></svg>
+    <svg class="sticker" style="right:3%;top:90px;transform:rotate(12deg)" data-speed="0.1"><use href="#s-beret"/></svg>
+    <svg class="sticker sm" style="left:10%;bottom:70px;transform:rotate(8deg)" data-speed="0.14"><use href="#s-star"/></svg>
+    <svg class="sticker" style="right:8%;bottom:40px;transform:rotate(-10deg)" data-speed="0.08"><use href="#s-steth"/></svg>
+    <p class="eyebrow rise">a korean drama, in one long scroll</p>
+    <h1 class="title rise">Descendants<br>of the <span class="hl">Sun</span></h1>
+    <p class="lead rise">A soldier. A surgeon. A far-away country that needs both of them. Scroll down and read the story one step at a time.</p>
+    <div class="badge-row rise">
+      <span class="pill">2016</span><span class="pill">16 episodes</span><span class="pill">romance + rescue</span>
+    </div>
+    <p class="scrollhint">scroll down ↓</p>
+  </section>
+
+  <!-- CHAPTER 1: CAPTAIN -->
+  <section class="chapter">
+    <svg class="sticker" style="left:0;top:90px;transform:rotate(-8deg)" data-speed="0.12"><use href="#s-tag"/></svg>
+    <svg class="sticker sm" style="right:2%;top:140px;transform:rotate(14deg)" data-speed="0.18"><use href="#s-chevron"/></svg>
+    <p class="eyebrow rise">chapter one</p>
+    <h2 class="big rise">Meet the <span class="hl">Captain</span></h2>
+    <p class="lead rise">Captain Yoo Si-jin leads a special forces team in the Korean army. He is brave, a little cheeky, and very serious about keeping his people safe.</p>
+    <label class="photo rise">
+      <input type="file" accept="image/*" data-photo aria-label="Add a photo of Captain Yoo Si-jin">
+      
+      <span class="ph"><svg><use href="#s-person"/></svg><b>Captain Yoo Si-jin</b><span>Tap to add your photo</span></span>
+    </label>
+    <p class="caption rise">“Duty first, then everything else.”</p>
+    <p class="small">(a line written for this page, not a quote from the show)</p>
+  </section>
+
+  <!-- CHAPTER 2: DOCTOR -->
+  <section class="chapter band pink">
+    <svg class="sticker lg" style="right:0;top:70px;transform:rotate(10deg)" data-speed="0.1"><use href="#s-steth"/></svg>
+    <svg class="sticker sm" style="left:3%;top:200px;transform:rotate(-12deg)" data-speed="0.16"><use href="#s-pill"/></svg>
+    <p class="eyebrow rise">chapter two</p>
+    <h2 class="big rise">Meet the <span class="hl">Doctor</span></h2>
+    <p class="lead rise">Dr. Kang Mo-yeon is a skilled surgeon. She is honest, stubborn, and calm in an emergency. She believes every life matters, and she says so out loud.</p>
+    <label class="photo alt rise">
+      <input type="file" accept="image/*" data-photo aria-label="Add a photo of Dr. Kang Mo-yeon">
+
+      <span class="ph"><svg><use href="#s-person"/></svg><b>Dr. Kang Mo-yeon</b><span>Tap to add your photo</span></span>
+    </label>
+    <p class="caption rise">“Every patient is somebody’s whole world.”</p>
+    <p class="small">(also written for this page)</p>
+  </section>
+
+  <!-- CHAPTER 3: TWO WORLDS -->
+  <section class="chapter">
+    <svg class="sticker sm" style="left:1%;top:60px;transform:rotate(-10deg)" data-speed="0.14"><use href="#s-helmet"/></svg>
+    <svg class="sticker sm" style="right:1%;top:60px;transform:rotate(10deg)" data-speed="0.14"><use href="#s-syringe"/></svg>
+    <p class="eyebrow rise">chapter three</p>
+    <h2 class="big rise">Two jobs, <span class="hl">one goal</span></h2>
+    <p class="lead rise">The soldier and the doctor work in very different ways. Both want to protect people.</p>
+    <div class="split rise">
+      <div class="army-card">
+        <h3>The soldier</h3>
+        <ul><li>Trains for danger</li><li>Moves fast as a team</li><li>Follows orders and plans</li><li>Keeps people safe</li></ul>
+      </div>
+      <div class="med-card">
+        <h3>The doctor</h3>
+        <ul><li>Studies for years</li><li>Works with steady hands</li><li>Makes tough choices</li><li>Heals people</li></ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- HEARTBEAT -->
+  <section class="chapter band mint">
+    <svg class="sticker" style="left:4%;top:50px;transform:rotate(-8deg)" data-speed="0.1"><use href="#s-heart"/></svg>
+    <svg class="sticker sm" style="right:5%;bottom:50px;transform:rotate(12deg)" data-speed="0.15"><use href="#s-cross"/></svg>
+    <p class="eyebrow rise">a little pause</p>
+    <svg class="ecg" viewBox="0 0 600 120" aria-hidden="true"><path d="M0 70h150l18-44 24 80 22-60 16 24h370"/></svg>
+    <p class="counter" id="beat">72</p>
+    <p class="lead rise">That is a resting heartbeat, in beats per minute. In this story the heart rate goes up a lot. Scroll and watch it climb.</p>
+  </section>
+
+  <!-- CHAPTER 4: CREW -->
+  <section class="chapter">
+    <svg class="sticker" style="right:0;top:40px;transform:rotate(12deg)" data-speed="0.12"><use href="#s-patch"/></svg>
+    <svg class="sticker sm" style="left:2%;top:100px;transform:rotate(-14deg)" data-speed="0.18"><use href="#s-star"/></svg>
+    <p class="eyebrow rise">chapter four</p>
+    <h2 class="big rise">The <span class="hl">friends</span></h2>
+    <p class="lead rise">Nobody does this alone. Meet the two best friends in uniform.</p>
+    <div class="crew rise">
+      <div style="display:grid;gap:12px;justify-items:center">
+        <label class="photo">
+          <input type="file" accept="image/*" data-photo aria-label="Add a photo of Sergeant Major Seo Dae-young">
+          <span class="ph"><svg><use href="#s-person"/></svg><b>Seo Dae-young</b><span>Tap to add your photo</span></span>
+        </label>
+        <p class="small">Sergeant Major · loyal, funny, strong</p>
+      </div>
+      <div style="display:grid;gap:12px;justify-items:center">
+        <label class="photo alt">
+          <input type="file" accept="image/*" data-photo aria-label="Add a photo of Lieutenant Yoon Myung-joo">
+          <span class="ph"><svg><use href="#s-person"/></svg><b>Yoon Myung-joo</b><span>Tap to add your photo</span></span>
+        </label>
+        <p class="small">Army doctor · sharp, brave, kind</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- CHAPTER 5: URK -->
+  <section class="chapter band pink">
+    <svg class="sticker lg" style="left:0;top:60px;transform:rotate(-10deg)" data-speed="0.1"><use href="#s-helmet"/></svg>
+    <svg class="sticker sm" style="right:3%;top:90px;transform:rotate(10deg)" data-speed="0.16"><use href="#s-syringe"/></svg>
+    <p class="eyebrow rise">chapter five</p>
+    <h2 class="big rise">A far-away place called <span class="hl">Urk</span></h2>
+    <p class="lead rise">Urk is a made-up country in the story. When a big earthquake hits, soldiers and doctors travel there to help. The mission is hard, and it brings the heroes closer than they ever planned.</p>
+    <p class="lead rise">Rescue work needs soldiers who protect and doctors who heal. That is why this story has both.</p>
+  </section>
+
+  <!-- FINALE -->
+  <section class="chapter">
+    <svg class="sticker" style="left:6%;top:60px;transform:rotate(-12deg)" data-speed="0.12"><use href="#s-beret"/></svg>
+    <svg class="sticker" style="right:6%;top:60px;transform:rotate(12deg)" data-speed="0.12"><use href="#s-cross"/></svg>
+    <svg class="sticker sm" style="left:20%;bottom:60px" data-speed="0.18"><use href="#s-star"/></svg>
+    <svg class="sticker sm" style="right:20%;bottom:50px" data-speed="0.14"><use href="#s-heart"/></svg>
+    <h2 class="big rise">You made it to the <span class="hl">end</span></h2>
+    <div class="stamp" id="stamp">Mission complete</div>
+    <p class="lead rise">Thanks for scrolling. Add your own photos above and make this page yours.</p>
+    <p class="small">Photos stay on your screen only. They are not saved when you close the page.</p>
+  </section>
+
+</main>
+<footer>A fan page for Descendants of the Sun. Stickers drawn for this page.</footer>
+
+<script>
+document.documentElement.classList.add('js');
+
+/* 1. reveal text as it scrolls into view */
+var rises = document.querySelectorAll('.rise, .stamp');
+if ('IntersectionObserver' in window) {
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+  }, { threshold: 0.15 });
+  rises.forEach(function (el) { io.observe(el); });
+} else {
+  rises.forEach(function (el) { el.classList.add('in'); });
+}
+
+/* 2. progress bar, floating stickers, heartbeat number */
+var bar = document.getElementById('bar');
+var beat = document.getElementById('beat');
+var stickers = document.querySelectorAll('.sticker');
+var still = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+var baseRot = [];
+stickers.forEach(function (s) {
+  var m = /rotate\((-?\d+)deg\)/.exec(s.style.transform || '');
+  baseRot.push(m ? parseInt(m[1], 10) : 0);
+});
+
+function onScroll() {
+  var y = window.scrollY;
+  var max = document.documentElement.scrollHeight - window.innerHeight;
+  var p = max > 0 ? y / max : 0;
+  bar.style.width = (p * 100) + '%';
+  beat.textContent = Math.round(72 + p * 78);
+  if (still) return;
+  stickers.forEach(function (s, i) {
+    var speed = parseFloat(s.getAttribute('data-speed')) || 0.1;
+    var r = s.parentElement.getBoundingClientRect();
+    var offset = (r.top + r.height / 2 - window.innerHeight / 2) * speed;
+    s.style.transform = 'translateY(' + offset.toFixed(1) + 'px) rotate(' + (baseRot[i] + offset * 0.15).toFixed(1) + 'deg)';
+  });
+}
+var ticking = false;
+window.addEventListener('scroll', function () {
+  if (!ticking) { ticking = true; requestAnimationFrame(function () { onScroll(); ticking = false; }); }
+}, { passive: true });
+onScroll();
+
+/* 3. tap a frame to add your own photo */
+document.querySelectorAll('[data-photo]').forEach(function (input) {
+  input.addEventListener('change', function () {
+    var file = input.files && input.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      var frame = input.closest('.photo');
+      var img = frame.querySelector('img');
+      if (!img) { img = document.createElement('img'); frame.appendChild(img); }
+      img.src = reader.result;
+      img.alt = input.getAttribute('aria-label').replace('Add a photo of ', '');
+      var ph = frame.querySelector('.ph');
+      if (ph) ph.hidden = true;
+    };
+    reader.readAsDataURL(file);
+  });
+});
+</script>
